@@ -11,7 +11,7 @@ Every agent that works on Triple Threat adds an entry here at the end of each ta
 
 ---
 
-## 2026-11-23 · Claude Code · `feat/garden-state-made` · awaiting merge
+## 2026-11-23 · Claude Code · `feat/garden-state-made` · merged 2026-11-23
 
 - **Garden State Made**, the owner's own team (the owner and friends), in Exhibition only: hand-written in
   `src/sim/guests.js` after the league (no id moves), kept out of MyLeague by `exhibition: true` and `clubIds()` in
@@ -48,7 +48,7 @@ Every agent that works on Triple Threat adds an entry here at the end of each ta
   screen. The real kit and floor painters were run on a real canvas in the page (no errors; about a fifth of each
   jersey is paint); the look of the kits on a body was only checked from an offline drawing of the same paint ops.
   The six stand in dev bodies until the owner sends a line per player (tone, hair, facial hair, build).
-- **Owner decisions:** Exhibition only; contender; just the six; P. Jones sixth man; "XX" is Z. Michael Jr.'s real
+- **Owner decisions:** "Merge" (2026-11-23), with the six still in dev bodies. Exhibition only; contender; just the six; P. Jones sixth man; "XX" is Z. Michael Jr.'s real
   number; initial and surname everywhere in the code and on screen (the repository is public); own Jersey gym; red
   road kit with white paint; the owner will describe each player's look.
 
