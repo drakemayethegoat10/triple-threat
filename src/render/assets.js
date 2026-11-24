@@ -1,5 +1,5 @@
 // The files the game loads besides its code, and where to load each from.
-import { TEAMS } from '../sim/teams.js';
+import { TEAMS, ownModels } from '../sim/teams.js';
 export const FLOOR_FILES = Object.freeze({
   colour: 'assets/floor/wood_floor_diff_2k.jpg', bumps: 'assets/floor/wood_floor_nor_gl_2k.jpg', gloss: 'assets/floor/wood_floor_rough_2k.jpg',
 });
@@ -13,11 +13,11 @@ export const MAP_FILES = Object.freeze(['knit-normal', 'knit-rough', 'twill-norm
 export const LOGO_FILES = Object.freeze(TEAMS.map(team => team.logo?.image).filter(Boolean));
 // A static headshot from the exported player model, shared by both builds.
 export const portraitFile = (team, number) => `assets/portraits/${team.key.toLowerCase()}-${number}.webp`;
-const PORTRAITS = TEAMS.filter(team => !team.dev).flatMap(team => team.players.map(p => portraitFile(team, p.number)));
+const PORTRAITS = TEAMS.filter(ownModels).flatMap(team => team.players.map(p => portraitFile(team, p.number)));
 
-// The model files are loaded only when the game needs them.
+// The model files are loaded only when the game needs them: one for each player of a team with models of its own.
 export const modelFile = (team, number) => `assets/players/${team.key.toLowerCase()}-${number}.glb`;
-export const MODEL_FILES = Object.freeze(TEAMS.filter(team => !team.dev).flatMap(team => team.players.map(p => modelFile(team, p.number))));
+export const MODEL_FILES = Object.freeze(TEAMS.filter(ownModels).flatMap(team => team.players.map(p => modelFile(team, p.number))));
 export const ASSETS = Object.freeze(['assets/players.glb', 'assets/motion.glb', 'assets/motion.json', ...Object.values(FLOOR_FILES), ...SOUNDS.map(soundPath), ...MAP_FILES, ...LOGO_FILES, ...PORTRAITS, ...MODEL_FILES]);
 // What the one-file build packs: everything but the league players' models, which would make it hundreds of megabytes
 // (the game is a website now: see tools/site.mjs). Opened from disk, a league player there stands in a dev body.

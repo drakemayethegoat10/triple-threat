@@ -8,8 +8,13 @@ import { setStyle, styled } from './styles.js';
 
 const RATING_KEYS = ['inside', 'mid', 'three', 'handle', 'speed', 'defence', 'rebound', 'stamina'];   // ratings.js's KEYS: it imports this file, so they are named here too
 
-// The last word of a person's name.
-export const surname = person => person.name.split(' ').pop();
+// A person's surname, as the box score and the broadcast say it: the last word of his name, or the last two when the
+// last is a suffix (Z. Michael Jr. is Michael Jr., not Jr.).
+const SUFFIX = /^(jr|sr|ii|iii|iv)\.?$/i;
+export const surname = person => {
+  const words = person.name.split(' ');
+  return words.length > 2 && SUFFIX.test(words.at(-1)) ? words.slice(-2).join(' ') : words.at(-1);
+};
 
 export const attackSign = team => (team === 0 ? 1 : -1);
 
@@ -180,6 +185,9 @@ export function createMatch(seed = 1, size = 3, teams = [0, 1]) {
     person.iq = iqOf(person, p.iq);
     person.traits = traitsOf(person, p.traits);
     person.mood = freshMood(person.traits);
+    // One of a team's duo (two who play off each other, see mood.js): the roster row of the other.
+    const partner = side.duo?.includes(p.number) ? side.players.findIndex(q => q.number !== p.number && side.duo.includes(q.number)) : -1;
+    if (partner >= 0) person.partner = partner;
   }));
   setStyle(state);   // Arcade with every slider at 50 until the page says otherwise (see styles.js)
   state.timeouts = [styled(state, 'timeout.each'), styled(state, 'timeout.each')];

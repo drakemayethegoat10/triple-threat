@@ -42,6 +42,13 @@ export function checkHands(name, hands) {
 
 // The name of a person's model in assets/players.glb.
 export const personName = (team, number) => `player-${team}-${number}`;
+// What a worn number gives the seed of his face: its value, with 00 a hundred more than 0; a number that is not
+// digits (Z. Michael Jr.'s XX) from its letters, above 200 so that it meets no number of digits.
+export function numberSeed(number) {
+  const text = String(number);
+  if (/^\d+$/.test(text)) return Number(text) + (text === '00' ? 100 : 0);
+  return 200 + [...text].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 97, 0);
+}
 
 // The model name for each court player, in `state.players` order: by his team's id (state.ids), not its side.
 export const courtPeople = state => state.players.map(p => personName(sideId(state, p.team), state.rosters[p.team][p.person].number));

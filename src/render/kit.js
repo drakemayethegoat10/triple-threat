@@ -34,6 +34,18 @@ export const KIT = f({
   outline: 0.12, piping: 0.005,
   stitch: f({ dash: f([0.008, 0.006, 0.003]), inset: 0.006 }),
   gear: f({ white: '#f2f2f2', black: '#161616', order: f(['white', 'black', 'team']) }),
+  // A team with a wordmark (two lines, see sim/guests.js): the small top line arched over the big one, which slants
+  // like a brush stroke, in the font given; each line's middle, height and the widest it may be.
+  wordmark: f({ top: f({ at: f([0.25, 0.245]), height: 0.05, arch: 0.55, widest: 0.3 }),
+    main: f({ at: f([0.25, 0.335]), height: 0.11, angle: -0.07, widest: 0.3, font: 'italic 900 {px}px system-ui, sans-serif' }) }),
+  // Paint flung across a kit (a uniform's `splatter` colour): spikes from each side seam, more and longer toward the
+  // hem (count, [shortest, longest] reach, the band along the seam they grow from), drops near the seams and across the
+  // lower panels ([smallest, biggest] radius), and a few big blots. stretch: how much narrower a drop is painted than
+  // it is tall, as the cloth stretches the picture sideways (see digit).
+  splatter: f({ spikes: 26, reach: f([0.025, 0.11]), band: 0.012, near: 46, field: 70, drop: f([0.0015, 0.006]), blots: 6, blot: f([0.008, 0.014]), stretch: 0.75 }),
+  // A team's state outline on the front and the back (`state`, see sim/guests.js), behind the number: its middle on
+  // each, how tall it is, and the width of its line.
+  state: f({ front: f([0.25, 0.52]), back: f([0.75, 0.5]), height: 0.44, line: 0.004 }),
 });
 
 // The socks: tubes round his legs that the file draws from a corner of the shoes' picture, [x, y, width, height] in
@@ -95,17 +107,70 @@ const piping = sides => sides.map(([x, top, w, h]) => {
 // and on a dev team's one kit.
 export const chestWord = (team, kit = 'own') => (kit === 'road' ? TEAMS[team].city : TEAMS[team].nickname).toUpperCase();
 
-// The lettering of a jersey for `team` in `kit` and `number`, in `fill` with an `outline`: its chest word arched across
-// the chest, each letter turned to the arch, and the number on the chest and on the back.
-function lettering(team, number, fill, outline, kit) {
-  const word = chestWord(team, kit), { at: [x, y], arch, spacing, widest } = KIT.name;
-  const fit = Math.min(1, widest / (KIT.name.height * KIT.digit * (spacing * (word.length - 1) + 1)));
-  const height = KIT.name.height * fit, step = height * KIT.digit * spacing, radius = (step * word.length) / arch;
-  const letters = [...word].map((text, k) => {
+// A word arched across the chest, its middle at `at`, each letter turned to the arch: as tall as `height` allows within
+// `widest`, bent `arch` radians end to end.
+function arched(word, { at: [x, y], height: tall, arch, widest, spacing = KIT.name.spacing }, fill, outline) {
+  const fit = Math.min(1, widest / (tall * KIT.digit * (spacing * (word.length - 1) + 1)));
+  const height = tall * fit, step = height * KIT.digit * spacing, radius = (step * word.length) / arch;
+  return [...word].map((text, k) => {
     const angle = ((k - (word.length - 1) / 2) * step) / radius;
     return { text, at: [x + radius * Math.sin(angle), y + radius * (1 - Math.cos(angle))], height, angle, fill, outline };
   });
-  return [...letters, ...[KIT.chest, KIT.back].map(spot => ({ text: String(number), ...spot, fill, outline }))];
+}
+
+// The lettering of a jersey for `team` in `kit` and `number`, in `fill` with an `outline`: its chest word arched across
+// the chest (or its wordmark's two lines: see KIT.wordmark), and the number on the chest and on the back.
+function lettering(team, number, fill, outline, kit) {
+  const mark = TEAMS[team]?.wordmark, { top, main } = KIT.wordmark;
+  const chest = mark
+    ? [...arched(mark[0], { ...top, spacing: 1.05 }, fill, outline),
+      { text: mark[1], at: main.at, height: main.height, angle: main.angle, widest: main.widest, font: main.font, fill, outline }]
+    : arched(chestWord(team, kit), KIT.name, fill, outline);
+  return [...chest, ...[KIT.chest, KIT.back].map(spot => ({ text: String(number), ...spot, fill, outline }))];
+}
+
+// A small seeded generator (0 to 1), so that the splatter is the same on every player and every load.
+const seeded = seed => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+// The splatter on a `part` (see KIT.splatter), all in its `splatter` colour: { fill, poly } for each spike and the band
+// along each seam, { fill, dots } for the drops and blots, each dot [x, y, radius].
+function splatterOps(part) {
+  const S = KIT.splatter, [top, bottom] = KIT.layout.main, next = seeded(part === 'jersey' ? 7919 : 104729), between = (lo, hi) => lo + (hi - lo) * next();
+  const [a, b, c, d] = KIT.sides.at, panels = [[a, b], [c, d]], ops = [];
+  // Each seam, and which way is inward from it.
+  const seams = [[a, 1], [b, -1], [c, 1], [d, -1]], start = top + (part === 'jersey' ? 0.12 : 0.02);
+  for (const [x, way] of seams) {
+    const outer = x - way * 0.03;   // a little past the seam, onto the panel beyond it (or off the picture)
+    ops.push({ fill: 'splatter', poly: [[outer, start], [x + way * S.band, start], [x + way * S.band, bottom], [outer, bottom]] });
+    for (let k = 0; k < S.spikes; k++) {
+      const y = between(start, bottom), low = (y - start) / (bottom - start), reach = between(S.reach[0], S.reach[1]) * (0.35 + 0.65 * low);
+      const half = between(0.004, 0.012), tip = [x + way * (S.band + reach), y + between(-0.02, 0.02)];
+      ops.push({ fill: 'splatter', poly: [[x + way * S.band - way * 0.002, y - half], tip, [x + way * S.band - way * 0.002, y + half]] });
+    }
+    const dots = [];
+    for (let k = 0; k < S.near; k++) {
+      const off = Math.abs(between(-1, 1) * between(0, 1)) * 0.14;
+      dots.push([x + way * (S.band + off), between(start, bottom), between(...S.drop) * (1 - off * 4)]);
+    }
+    ops.push({ fill: 'splatter', dots: dots.filter(([, , r]) => r > 0.001) });
+  }
+  // Drops across the lower panels, thicker toward the hem, and a few big blots.
+  const field = [];
+  for (const [from, to] of panels) {
+    for (let k = 0; k < S.field / 2; k++) field.push([between(from, to), top + (bottom - top) * (0.35 + 0.65 * Math.sqrt(next())), between(...S.drop) * 0.8]);
+    for (let k = 0; k < S.blots / 2; k++) field.push([between(from + 0.04, to - 0.04), between(top + 0.45 * (bottom - top), bottom - 0.03), between(...S.blot)]);
+  }
+  ops.push({ fill: 'splatter', dots: field });
+  return ops;
+}
+
+// A team's state outline (see KIT.state) on the front and the back of a jersey, as { stroke, path, width } in `colour`.
+function stateOps(team, colour) {
+  const outline = TEAMS[team]?.state;
+  if (!outline) return [];
+  const { height, line } = KIT.state, wide = height * KIT.splatter.stretch;
+  return [KIT.state.front, KIT.state.back].map(([x, y]) => ({ stroke: colour, width: line,
+    path: outline.map(([u, v]) => [x + (u - 0.5) * wide * 0.55, y + (v - 0.5) * height]) }));
 }
 
 // What to paint on a `part` ('jersey' or 'shorts') of the player of `team` wearing `number` in `kit` (see kitName), in
@@ -113,17 +178,18 @@ function lettering(team, number, fill, outline, kit) {
 // and `outline` naming 'team' (the body), 'panel', 'piping', 'binding', 'letters' or 'outline' (see kitColours).
 // Everything below the main region is the binding's colour, the strip and round it, so that no clear pixel is ever
 // blended into a binding's edge when the picture is shrunk (it frayed: the far model drops what is not opaque).
+// A kit with a `splatter` colour (see kitColours) has the paint flung across it in place of side panels and their
+// piping and the shorts' hem line, and a team with a state outline has it behind the jersey's numbers.
 export function kitOps(part, number, team = 0, kit = 'own') {
-  const sides = sideRects(part), below = KIT.layout.main[1] + 0.008;
+  const sides = sideRects(part), below = KIT.layout.main[1] + 0.008, splattered = !!TEAMS[team]?.uniforms?.[kit]?.splatter;
   const ops = [
     { fill: 'team', rect: band(KIT.layout.main) },
     { fill: 'binding', rect: [0, below, 1, 1 - below] },
-    ...sides.map(rect => ({ fill: 'panel', rect })),
-    ...piping(sides).map(rect => ({ fill: 'piping', rect })),
+    ...(splattered ? splatterOps(part) : [...sides.map(rect => ({ fill: 'panel', rect })), ...piping(sides).map(rect => ({ fill: 'piping', rect }))]),
     { fill: 'binding', rect: band(KIT.layout.trim) },
   ];
-  if (part === 'shorts') ops.push({ fill: 'piping', rect: [0, KIT.hem.at - KIT.hem.height / 2, 1, KIT.hem.height] });
-  if (part === 'jersey') ops.push(...lettering(team, number, 'letters', 'outline', kit));
+  if (part === 'shorts' && !splattered) ops.push({ fill: 'piping', rect: [0, KIT.hem.at - KIT.hem.height / 2, 1, KIT.hem.height] });
+  if (part === 'jersey') ops.push(...stateOps(team, 'splatter'), ...lettering(team, number, 'letters', 'outline', kit));
   return ops;
 }
 
@@ -169,7 +235,7 @@ export const pipingOf = own => [own.outline, own.letters, KIT.trim, KIT.gear.bla
 // a shade of it on the panels and round the lettering, and white for the rest.
 export function kitColours(team, kit = 'own') {
   const own = TEAMS[team]?.uniforms?.[kit], heights = { high: '#ffffff', low: '#000000' };
-  if (own) return { team: own.jersey, panel: own.trim, piping: pipingOf(own), binding: own.trim, letters: own.letters, outline: own.outline, ...heights };
+  if (own) return { team: own.jersey, panel: own.trim, piping: pipingOf(own), binding: own.trim, letters: own.letters, outline: own.outline, splatter: own.splatter ?? own.trim, ...heights };
   const rgb = KIT.team[team].slice(1).match(/../g).map(h => Math.round(parseInt(h, 16) * KIT.shade)), shade = `rgb(${rgb.join(', ')})`;
   return { team: KIT.team[team], panel: shade, piping: KIT.trim, binding: KIT.trim, letters: KIT.trim, outline: shade, ...heights };
 }
@@ -181,12 +247,35 @@ export function paintKit(context, size, ops, colours) {
   for (const op of ops) {
     context.fillStyle = colours[op.fill];
     if (op.rect) context.fillRect(...op.rect.map(n => n * size));
-    else {
-      const px = op.height * size, widest = px * KIT.digit * op.text.length;   // a wider one is squeezed to fit
+    else if (op.poly) {
+      context.beginPath();
+      op.poly.forEach(([x, y], k) => (k ? context.lineTo(x * size, y * size) : context.moveTo(x * size, y * size)));
+      context.closePath();
+      context.fill();
+    } else if (op.dots) {
+      context.beginPath();
+      for (const [x, y, r] of op.dots) {
+        context.moveTo(x * size + r * KIT.splatter.stretch * size, y * size);
+        context.ellipse(x * size, y * size, r * KIT.splatter.stretch * size, r * size, 0, 0, 2 * Math.PI);
+      }
+      context.fill();
+    } else if (op.path) {
+      context.save();
+      context.strokeStyle = colours[op.stroke];
+      context.lineWidth = op.width * size;
+      context.lineJoin = 'round';
+      context.beginPath();
+      op.path.forEach(([x, y], k) => (k ? context.lineTo(x * size, y * size) : context.moveTo(x * size, y * size)));
+      context.closePath();
+      context.stroke();
+      context.restore();
+    } else {
+      // A wider one is squeezed to fit its own `widest` (a share of the picture) or, by default, KIT.digit a letter.
+      const px = op.height * size, widest = op.widest ? op.widest * size : px * KIT.digit * op.text.length;
       context.save();
       context.translate(op.at[0] * size, op.at[1] * size);
       if (op.angle) context.rotate(op.angle);
-      context.font = KIT.font.replace('{px}', Math.round(px));
+      context.font = (op.font ?? KIT.font).replace('{px}', Math.round(px));
       if (op.outline) {
         context.strokeStyle = colours[op.outline];
         context.lineWidth = px * KIT.outline;

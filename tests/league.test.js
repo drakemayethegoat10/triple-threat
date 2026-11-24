@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { LEAGUE } from '../src/sim/league.js';
-import { TEAMS, ROLES, pickable } from '../src/sim/teams.js';
+import { TEAMS, ROLES, pickable, clubIds } from '../src/sim/teams.js';
+import { GUESTS } from '../src/sim/guests.js';
 import { overall } from '../src/sim/ratings.js';
 import { bodiesOf, modelled, personName } from '../src/render/checks.js';
 import { readCsv, roleOf, ratingsOf } from '../tools/league/import.mjs';
@@ -12,9 +13,11 @@ const RATINGS = ['inside', 'mid', 'three', 'handle', 'speed', 'defence', 'reboun
 test('the league is twelve teams, six East and six West, after the two dev teams, who are the only ones not pickable', () => {
   assert.equal(LEAGUE.length, 12);
   assert.deepEqual(LEAGUE.map(t => t.conference), [...Array(6).fill('East'), ...Array(6).fill('West')]);
-  assert.deepEqual(TEAMS.slice(2), [...LEAGUE]);
-  assert.deepEqual(TEAMS.map(t => !!t.dev), [true, true, ...Array(12).fill(false)]);
+  // After the league, the teams that play in Exhibition only: pickable there, never in MyLeague.
+  assert.deepEqual(TEAMS.slice(2), [...LEAGUE, ...GUESTS]);
+  assert.deepEqual(TEAMS.map(t => !!t.dev), [true, true, ...Array(12 + GUESTS.length).fill(false)]);
   assert.deepEqual(pickable(), TEAMS.map((t, id) => id).slice(2));
+  assert.deepEqual(clubIds(), TEAMS.map((t, id) => id).slice(2, 14));
   assert.equal(new Set(TEAMS.map(t => t.abbr)).size, TEAMS.length, 'every abbreviation its own');
 });
 
@@ -69,7 +72,7 @@ test('a league player whose own model cannot be loaded stands in a dev body, a d
     const bodies = bodiesOf(id);
     assert.deepEqual(bodies.map(b => b.number), team.players.map(p => p.number));
     if (modelled(id)) { assert.deepEqual(bodies.map(b => b.body), team.players.map(p => personName(id, p.number))); continue; }
-    assert.equal(new Set(bodies.map(b => b.body)).size, 10, team.key);
+    assert.equal(new Set(bodies.map(b => b.body)).size, team.players.length, team.key);
     bodies.forEach((b, row) => {
       const [, devTeam, number] = b.body.split('-').map(Number), dev = TEAMS[devTeam].players.find(p => p.number === number);
       assert.ok(modelled(devTeam), b.body);

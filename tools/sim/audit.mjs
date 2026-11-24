@@ -10,7 +10,7 @@ import { setStyle } from '../../src/sim/styles.js';
 import { step } from '../../src/sim/step.js';
 import { aiIntents } from '../../src/sim/ai.js';
 import { DT } from '../../src/sim/tuning.js';
-import { TEAMS } from '../../src/sim/teams.js';
+import { TEAMS, clubIds } from '../../src/sim/teams.js';
 import { teamLine } from '../../src/sim/stats.js';
 import { pathToFileURL } from 'node:url';
 import { writeFileSync } from 'node:fs';
@@ -26,8 +26,8 @@ export function play(engine, a, b, seed, minutes) {
   return s;
 }
 
-// Every league pairing, `games` times each (home and away in turn): each player's lines, and each team's.
-export function collect(engine, games, minutes, ids = TEAMS.map((t, id) => id).filter(id => !TEAMS[id].dev)) {
+// Every league pairing (the MyLeague teams: see teams.js clubIds), `games` times each (home and away in turn): each player's lines, and each team's.
+export function collect(engine, games, minutes, ids = clubIds()) {
   const players = new Map(), teams = [], checks = { games: 0, pointsOff: 0, minutesOff: 0, reboundsOff: 0, assistsOver: 0 };
   let seed = 1;
   for (const a of ids) for (const b of ids) if (a < b) for (let g = 0; g < games; g++) {

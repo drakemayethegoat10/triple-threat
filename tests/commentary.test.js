@@ -22,7 +22,7 @@ const SAMPLES = [
   h('periodEnd', { team: null, row: null, name: null, quarter: 2, final: false, score: [22, 22] }),
   h('periodEnd', { team: null, row: null, name: null, quarter: 4, final: false, score: [50, 50] }),
   h('periodEnd', { team: null, row: null, name: null, quarter: 4, final: true, score: [58, 61] }),
-  ...KINDS.map(kind => h(kind, kind === 'run' ? { n: 12, row: null, name: null } : kind === 'comeback' ? { row: null, name: null } : kind === 'block' ? { chase: false } : {})),
+  ...KINDS.map(kind => h(kind, kind === 'run' ? { n: 12, row: null, name: null } : kind === 'comeback' ? { row: null, name: null } : kind === 'block' ? { chase: false } : kind === 'duo' ? { off: 'Marsh' } : {})),
   h('block', { chase: true }),
 ];
 

@@ -29,7 +29,7 @@ const kinds = list => list.map(h => h.kind);
 const moments = list => list.filter(h => h.moment).map(h => h.kind);
 
 test('the moments are listed biggest first, and six of them are stars', () => {
-  assert.equal(KINDS.length, 15);   // rivalry (see mood.js) the newest
+  assert.equal(KINDS.length, 16);   // duo (see mood.js) the newest
   assert.deepEqual([...STARS].sort(), ['andOne', 'ankle', 'block', 'buzzer', 'poster', 'winner']);
   for (const kind of STARS) assert.ok(KINDS.includes(kind));
 });

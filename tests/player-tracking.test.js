@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { TEAMS } from '../src/sim/teams.js';
+import { TEAMS, clubIds } from '../src/sim/teams.js';
 import { PLAYER_TRACKING } from '../src/sim/player-tracking.js';
 import { createMatch } from '../src/sim/state.js';
 import { tendenciesOf } from '../src/sim/tendencies.js';
@@ -8,9 +8,8 @@ import { rotationPlan } from '../src/sim/roster.js';
 
 test('all league players feed their own measured shot mix, drives, passing and minutes into the shared match state', () => {
   const tracked = new Set();
-  for (const [id, team] of TEAMS.entries()) {
-    if (team.dev) continue;
-    const state = createMatch(1, 5, [id, 0]);
+  for (const id of clubIds()) {
+    const team = TEAMS[id], state = createMatch(1, 5, [id, 0]);
     const plan = rotationPlan(state, 0);
     assert.ok(Math.abs(plan.reduce((total, seconds) => total + seconds, 0) - 20 * state.quarterLength) < 1e-8);
     team.players.forEach((player, row) => {

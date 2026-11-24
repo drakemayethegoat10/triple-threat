@@ -2,8 +2,8 @@
 // maker and the fast engine read only what is here (and the ratings), so a team added to TEAMS plays like any other.
 //
 // A team: its name and abbreviation, the keys of its playbook, its defence and its coach, and its players in roster
-// order (eight for a dev team, ten for the league's; the first three start a three-a-side match, the first five a
-// five-a-side one). A player: name, number,
+// order (eight for a dev team, ten for the league's, six for Garden State Made; the first three start a three-a-side
+// match, the first five a five-a-side one). A player: name, number,
 // position, role, the eight ratings, and, if he is unlike his role, his own `tendencies` and `iq` (see tendencies.js).
 // And how the team looks, which the simulation never reads: its city and nickname (its name is the two together); its
 // colour (its kit, its fans' shirts), and if it likes, a brighter one for the page's edges (`bar`) and a pale one for
@@ -11,6 +11,7 @@
 // and paths each filled or stroked, as an SVG path); and its arena (a key of render/arenas.js's ARENAS). A team's place in TEAMS is
 // its id: its players' 3D models are named by it (player-<id>-<number> in assets/players.glb).
 import { LEAGUE } from './league.js';
+import { GUESTS } from './guests.js';
 
 const f = Object.freeze;
 
@@ -23,7 +24,7 @@ const player = (name, number, position, role, ratings, own = {}) => f({ name, nu
 export const nicknameOf = team => team.nickname ?? team.name.split(' ').pop();
 
 // The two dev teams first (ids 0 and 1: the game's own tests and tools play them, and they are shown only on a link
-// ending #dev), then the league (league.js), East then West.
+// ending #dev), then the league (league.js), East then West, then the teams that play in Exhibition only (guests.js).
 export const TEAMS = f([
   f({
     name: 'Harbor City Waves', abbr: 'WAV', playbook: 'paceSpace', defence: 'switchAll', coach: 'steady', dev: true,
@@ -64,10 +65,17 @@ export const TEAMS = f([
     ]),
   }),
   ...LEAGUE,
+  ...GUESTS,
 ]);
 
-// The teams a player may pick: the league, and the dev teams too when `dev` (the link ends #dev).
+// The teams a player may pick in Exhibition: the league and the guests, and the dev teams too when `dev` (the link
+// ends #dev).
 export const pickable = (dev = false) => TEAMS.map((team, id) => id).filter(id => dev || !TEAMS[id].dev);
+// The teams of MyLeague: the league's, never a dev team or one that plays in Exhibition only.
+export const clubIds = () => pickable().filter(id => !TEAMS[id].exhibition);
+// Whether a team's players have models of their own (a file each: see render/assets.js): the league's do; a dev
+// team's are in assets/players.glb, and a team that has none yet (`models: false`) stands in dev bodies.
+export const ownModels = team => !team.dev && team.models !== false;
 
 // What each role is for, as starting tendencies (each 0 to 1; see tendencies.js for what they mean and how a
 // player's ratings move them) and a starting IQ. 'Role player' stands in for a role not listed.
