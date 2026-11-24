@@ -2,14 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readGlb, primitivesUnder, nodesUnder } from './glb.js';
-import { TEAMS } from '../src/sim/teams.js';
+import { TEAMS, ownModels } from '../src/sim/teams.js';
 import { modelFile } from '../src/render/assets.js';
 
 // The league players' recipes (made by tools/league/import.mjs from the appearance file) and their models (built from
 // them by tools/blender/build_players.py, each in a file of his own).
 const recipes = JSON.parse(readFileSync('assets/source/league-people.json', 'utf8')).people;
 const STYLES = ['buzz', 'fade', 'curls', 'afro', 'twists', 'locs', 'cornrows', 'short'];
-const league = TEAMS.map((team, id) => ({ team, id })).filter(({ team }) => !team.dev);
+const league = TEAMS.map((team, id) => ({ team, id })).filter(({ team }) => ownModels(team));
 
 test('every league player has a recipe: his team, number and height as the league has them, and nothing that names anyone', () => {
   assert.equal(recipes.length, 120);

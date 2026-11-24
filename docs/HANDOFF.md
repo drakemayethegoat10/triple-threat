@@ -11,6 +11,47 @@ Every agent that works on Triple Threat adds an entry here at the end of each ta
 
 ---
 
+## 2026-11-23 · Claude Code · `feat/garden-state-made` · merged 2026-11-23
+
+- **Garden State Made**, the owner's own team (the owner and friends), in Exhibition only: hand-written in
+  `src/sim/guests.js` after the league (no id moves), kept out of MyLeague by `exhibition: true` and `clubIds()` in
+  `teams.js`. Six players named by initial and surname: L. Pryor, G. Archundia, A. Madore, Z. Michael Jr. (wears "XX"),
+  D. Tortu, P. Jones (sixth man). Coaches Z. Michael Sr. and D. Feaster are in the data, but nothing outside MyLeague
+  shows a coach, so neither appears on screen.
+- **Ratings.** Rated like league starters, six men playing every minute won 85% against the league, so the stars are
+  92 and 91 and the others 80, 77, 77, 75. In 3D (6 games against each team) they won 64% Simulation / 68% Arcade at
+  five a side, 54% / 56% at three a side; OKC won 47% in 3D Arcade. The fast engine has them at 74% / 92% five a side,
+  but Exhibition never uses it.
+- **The duo** (Pryor and Archundia): each looks for the other on a pass (`MOOD.duo.look`, which alone moved nothing
+  measurable), a basket by one lifts the other, and with one on the ball the other takes the big's part in a play
+  (`plays.js` cast: their two-man game). In 3D Simulation five a side, on the final code against the same team without
+  the duo: baskets fed by each other 16% vs 13%, Pryor's dunks 3.7 vs 2.4 a game, wins 64% vs 54%. Three a side Arcade:
+  19% vs 18%, no real difference. The broadcast marks a fed dunk, three or and-one as DYNAMIC DUO.
+- **G. Archundia's post-up.** A point guard, he never went to the block, so the post fade the owner asked for did not
+  happen. A per-player `lowPost` tendency (only he has it) sends him to the block off the ball: 27 shots a game, more of
+  them close in, threes down to 1.0. His fadeaway is still rare (0.4 a game): the fade trails his best option by about
+  0.6 expected points, mostly because a pass to a star is worth so much. A preference of +0.09 did nothing and was taken
+  out. Making it common needs a change to how the fade is valued: an owner decision.
+- **Kits, logo, gym.** The kit painter has data-driven splatter (spikes off the side seams and drops, in place of side
+  panels), a two-line wordmark (GARDEN STATE over a slanted MADE) and New Jersey's outline behind the numbers. Home:
+  white with red paint; road: red with white. The logo is cut from the owner's avatar screenshot
+  (`tools/league/guest_logo.py`), soft at 512 px. The Garden State Gym: black apron with red paint flung across it,
+  white centre circle with the logo, two banners that claim no titles.
+- **Fixes on the way.** A surname keeps its suffix (Michael Jr., and the league's Carton Jr., which showed as "Jr.").
+  A lettered number gets a face seed of its own (`numberSeed`).
+- **Gates.** Every report matched `main` exactly on the same seeds (league and dev teams play as before): Arcade
+  −3.7% / −3.0% / +0.8% (3v3 points, PPP, seconds) and −3.1% / −3.2% / −0.2% (5v5); Simulation 3D / fast per 48:
+  96.9 / 100.6 possessions, 117.2 / 115.0 points, 34.6 / 36.3 threes; star usage 21.9–32.7%. `npm test` with the
+  machine idle: 1,316 passed, 0 failed, 1 skipped, 1 to-do. The copy-timing test failed twice while other work ran,
+  then passed alone three times on both checkouts at the same speed. Both builds passed.
+- **Not verified.** Nobody has seen the team in a match on screen: the browser pane was hidden and the session not on
+  screen. The real kit and floor painters were run on a real canvas in the page (no errors; about a fifth of each
+  jersey is paint); the look of the kits on a body was only checked from an offline drawing of the same paint ops.
+  The six stand in dev bodies until the owner sends a line per player (tone, hair, facial hair, build).
+- **Owner decisions:** "Merge" (2026-11-23), with the six still in dev bodies. Exhibition only; contender; just the six; P. Jones sixth man; "XX" is Z. Michael Jr.'s real
+  number; initial and surname everywhere in the code and on screen (the repository is public); own Jersey gym; red
+  road kit with white paint; the owner will describe each player's look.
+
 ## 2026-11-18 · Codex · `codex/player-tracking-fouls` · awaiting merge
 
 - Loose-ball fouls and illegal screens now have scoreboard labels, broadcast commentary and crowd foul reactions. The rules already emitted both calls and the HUD had no labels for them. The new HUD also gives an unknown call a generic whistle label.

@@ -5,7 +5,8 @@
 // passFirst: how much he would rather pass than shoot. drive, post, iso: how much he likes to attack off the dribble,
 // back a man down, or take him one on one. crash: whether he goes to the offensive glass. gamble: whether he reaches
 // for steals. help: how readily he leaves his man to help. foul: how often his contact draws a whistle.
-// iq: how well he decides (0.35 to 0.98).
+// iq: how well he decides (0.35 to 0.98). lowPost (a player's own only, never a role's): off the ball he waits on the
+// block as a big does, whatever his size (G. Archundia, a point guard who posts up: see guests.js and offball.js).
 import { ROLES } from './teams.js';
 import { overall } from './overall.js';
 

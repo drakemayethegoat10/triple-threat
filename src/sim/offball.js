@@ -19,6 +19,7 @@ function off(point, a, b) {
 // What he is, for where he stands: one of his team's two best inside men on the floor is a big (one, in three a
 // side); a good three-point shooter is a shooter; anyone else is a slasher.
 export function kindOf(state, player) {
+  if (personOf(state, player).tend?.lowPost) return 'big';   // a guard who posts up waits on the block too (see tendencies.js)
   const team = state.players.filter(p => p.team === player.team).sort((a, b) => inside(state, b) - inside(state, a) || a.slot - b.slot);
   if (team.indexOf(player) < (state.size === 5 ? 2 : 1)) return 'big';
   return rated(state, player, 'three') >= OFF.shooterAt ? 'shooter' : 'slasher';

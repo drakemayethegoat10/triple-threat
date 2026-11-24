@@ -1,8 +1,8 @@
 // Franchise saves use the league's permanent team keys. Only the match adapter needs their renderer indices.
-import { TEAMS, pickable } from '../sim/teams.js';
+import { TEAMS, clubIds } from '../sim/teams.js';
 import { rand } from '../sim/state.js';
 
-export const clubs = Object.fromEntries(pickable().map(i => [TEAMS[i].key, TEAMS[i]]));
+export const clubs = Object.fromEntries(clubIds().map(i => [TEAMS[i].key, TEAMS[i]]));
 export const lengths = [14, 28, 56, 82];
 export const nextSeed = rng => Math.floor(rand(rng) * 4294967296);
 

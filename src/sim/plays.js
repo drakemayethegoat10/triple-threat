@@ -229,10 +229,14 @@ function context(state, play) {
 
 // Gives the play's parts to the team's players on the court, by what each is good at: the handler has the ball; of
 // the rest the best inside (inside and rebound together) is the big and the next is big2; of those left the better
-// three-point shooter is the shooter and the other the wing. Three a side has a big and a wing.
+// three-point shooter is the shooter and the other the wing. Three a side has a big and a wing. One of a duo with the
+// ball plays off the other (see mood.js MOOD.duo): his partner, on court, is the big, who screens for him, rolls and
+// posts up: their two-man game.
 export function cast(state, holder) {
   const r = (p, key) => rated(state, p, key), inside = p => r(p, 'inside') + r(p, 'rebound');
   const rest = state.players.filter(p => p.team === holder.team && p !== holder).sort((a, b) => inside(b) - inside(a) || a.slot - b.slot);
+  const partner = personOf(state, holder).partner, mate = partner === undefined ? null : rest.find(p => p.person === partner);
+  if (mate) rest.unshift(...rest.splice(rest.indexOf(mate), 1));
   const ids = { handler: holder.id, big: rest[0].id };
   if (rest.length === 2) { ids.wing = rest[1].id; return ids; }
   const [shooter, wing] = rest.slice(2).sort((a, b) => r(b, 'three') - r(a, 'three') || a.slot - b.slot);

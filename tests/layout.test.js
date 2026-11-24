@@ -129,7 +129,7 @@ test('every league team has an arena of its own, named for its venue, in its cit
     assert.ok(look.banners.every(b => b.top.includes(team.nickname.toUpperCase())), team.key);
     assert.ok(['wave', 'angle'].includes(look.trusses));
   }
-  assert.equal(names.size, TEAMS.length, 'fourteen arenas, all different');
+  assert.equal(names.size, TEAMS.length, 'fifteen arenas, all different');
   assert.equal(arenaOf(99), ARENAS.tidewater, 'a team there is not plays at Tidewater');
 });
 

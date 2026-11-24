@@ -2,6 +2,7 @@
 // It makes words only; the page shows them and the browser's voice speaks them.
 import { nicknameOf } from '../sim/teams.js';
 import { teamLine } from '../sim/stats.js';
+import { surname } from '../sim/state.js';
 
 const VIOLATIONS = { travel: 'Travelling', doubleDribble: 'Double dribble', backcourt: 'Backcourt violation', eightSeconds: 'Eight seconds',
   threeSeconds: 'Three seconds in the key', shotClock: 'Shot-clock violation', fiveSeconds: 'Five seconds on the inbound' };
@@ -46,6 +47,7 @@ export const LINES = Object.freeze({
   clutch: ['{name}, when it matters most!', 'A huge basket by {name}!', 'Ice in his veins: {name}.'],
   onFire: ['{name} is on fire! Five in a row.', 'He cannot miss! {name} has five straight.', 'Five in a row for {name}. Get him the ball.'],
   heatingUp: ['{name} is heating up.', 'Three in a row for {name}.', '{name} has found his touch.'],
+  duo: ['{off} to {name}. The dynamic duo strikes again!', '{off} finds {name}! These two are something else.', 'That two-man game! {off} and {name}.'],
   rivalry: ['A real battle out there: {name}.', 'These two have been going at it all night: {name}.', '{name}. Neither one is backing down.'],
   rattled: ['{name} looks rattled.', '{name} is getting frustrated out there.', 'You can see it on {name}. He is not happy.'],
   run: ['{team} are on a {n} to nothing run.', 'Make it {n} unanswered for {team}.', 'A {n} to nothing run for {team}.'],
@@ -118,7 +120,7 @@ export function quietLine(booth, state, now) {
     let facts = null;
     if (key === 'statLead') {
       const best = state.rosters.flatMap((roster, team) => roster.map(person => ({ person, team }))).reduce((a, b) => (b.person.stats.pts > a.person.stats.pts ? b : a));
-      if (best.person.stats.pts >= 6) facts = { name: best.person.name.split(' ').pop(), pts: best.person.stats.pts };
+      if (best.person.stats.pts >= 6) facts = { name: surname(best.person), pts: best.person.stats.pts };
     } else if (key === 'statShooting') {
       const team = state.possession, line = teamLine(state, team);
       if (line.fga >= 8) facts = { team: short(state, team), n: Math.round((100 * line.fgm) / line.fga) };

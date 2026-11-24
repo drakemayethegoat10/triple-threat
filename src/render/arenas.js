@@ -60,7 +60,7 @@ export function logoSvg(team) {
 // `apron`, the colour the floor outside the lines is painted; `words`, the colour of the city and the name on it (else
 // the lane's); `centre`, the centre circle's colour (else the lane's), or 'wood' for none; `ring`, rings round it, {
 // r, width, colour, count, gap }; `art`, what is painted behind the baselines and beside the words, { kind: 'stars' or
-// 'mountains', colour, edge }.
+// 'mountains' or 'splatter' (paint flung across the run-off, thickest at the corners), colour, edge }.
 const DEV = f({
   tidewater: f({
     name: 'TIDEWATER ARENA', city: 'HARBOR CITY', team: 0,
@@ -204,8 +204,30 @@ const LEAGUE_ARENAS = f({
   }),
 });
 
+// The arenas of the teams that play in Exhibition only (see sim/guests.js): their name and city from the team, their
+// banners as given, and the rest as a league arena's.
+function guest(key, { banners, colour, ...look }) {
+  const id = TEAMS.findIndex(t => t.key === key), t = TEAMS[id];
+  return f({ name: t.venue.name.toUpperCase(), city: t.city.toUpperCase(), team: id, colour: f({ ceiling: '#06070b', laneShade: 0.88, ...colour }),
+    ...look, floor: f(look.floor ?? {}), banners: f(banners.map(f)) });
+}
+const GUEST_ARENAS = f({
+  // Garden State Made's Jersey gym: black steel and red seats under plain white light, a black apron with red paint
+  // flung across it, the team's mark on a white centre circle, and banners of its own (nothing it has not won).
+  gsm: guest('GSM', {
+    colour: { fascia: '#111111', accent: '#b5121b', concrete: '#8e0f19', steel: '#3a3a3e', glass: '#ffd0d4', warm: '#fff1e8', ceiling: '#050505',
+      lane: '#b5121b', laneShade: 0.9, lights: [1, 0.98, 0.96] },
+    trusses: 'angle',
+    floor: { apron: '#111111', words: '#ffffff', centre: '#ffffff', ring: { r: 2.05, width: 0.2, colour: '#b5121b' }, art: { kind: 'splatter', colour: '#b5121b' } },
+    banners: [
+      { top: 'GARDEN STATE MADE', big: 'GSM', bottom: 'NEW JERSEY' },
+      { top: 'GARDEN STATE MADE', big: '30 & 10', bottom: 'THE DYNAMIC DUO' },
+    ],
+  }),
+});
+
 // Every arena, by the key a team names (its `arena`).
-export const ARENAS = f({ ...DEV, ...LEAGUE_ARENAS });
+export const ARENAS = f({ ...DEV, ...LEAGUE_ARENAS, ...GUEST_ARENAS });
 
 // The arena a match is played in: the home team's (`home`, its id); Tidewater for a team there is not.
 export const arenaOf = (home = 0) => ARENAS[TEAMS[home]?.arena] ?? ARENAS.tidewater;

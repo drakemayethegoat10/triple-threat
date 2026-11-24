@@ -21,7 +21,7 @@ export const CELEBRATIONS = Object.freeze(['fistPump', 'armsUp', 'flex', 'goggle
 export const REACT = Object.freeze({ showman: 0.6, fire: 0.6, leader: 0.65, boil: 0.5, again: 40, reach: 1.3, meet: 3 });
 
 // The moments that make a basket big, and among them those that leave the man scored on hurt.
-const BIG = new Set(['andOne', 'buzzer', 'ankle', 'poster', 'stealScore', 'deep', 'clutch', 'heatingUp', 'onFire', 'winner']);
+const BIG = new Set(['andOne', 'buzzer', 'ankle', 'poster', 'stealScore', 'deep', 'clutch', 'heatingUp', 'onFire', 'winner', 'duo']);
 const HURTS = new Set(['poster', 'ankle', 'winner', 'buzzer', 'andOne', 'clutch']);
 const CLINCH = new Set(['winner', 'buzzer', 'clutch']);
 

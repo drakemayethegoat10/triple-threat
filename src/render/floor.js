@@ -84,6 +84,18 @@ function paintCourt(wood, look) {
       if (F.art.edge) { g.strokeStyle = F.art.edge; g.lineWidth = 0.06 * PX; g.stroke(); }
     }
   }
+  // Or paint flung across the run-off: drops, a few of them big, on all four sides, thickest toward the corners. The
+  // same drops every time (a seeded draw).
+  if (F.art?.kind === 'splatter') {
+    let seed = 4099;
+    const next = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+    g.fillStyle = F.art.colour;
+    for (let k = 0; k < 480; k++) {
+      const along = next() * 2 - 1, corner = Math.sign(along) * Math.abs(along) ** 0.6, side = next() < 0.5 ? -1 : 1, out = next();
+      const [x, z] = k % 2 ? [side * (L + (FLOOR.length / 2 - L) * out), corner * (FLOOR.width / 2)] : [corner * (FLOOR.length / 2), side * (W + (FLOOR.width / 2 - W) * out)];
+      g.beginPath(); g.arc(X(x), Z(z), (0.03 + 0.14 * next() ** 3) * PX, 0, 2 * Math.PI); g.fill();
+    }
+  }
   // The city along the run-off behind each baseline, read from the court; the arena's name along each sideline's.
   const words = (text, x, z, turn, high) => {
     g.save(); g.translate(X(x), Z(z)); g.rotate(turn);

@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BALL, MOVES } from '../sim/tuning.js';
-import { TEAMS } from '../sim/teams.js';
+import { TEAMS, ownModels } from '../sim/teams.js';
 import { clone as cloneRig } from 'three/addons/utils/SkeletonUtils.js';
 import { onFloor, personOf } from '../sim/state.js';
 import { moodOf } from '../sim/mood.js';
 import { assetUrl, modelFile } from './assets.js';
 import { MOTION, REACTION_CLIPS, legMotion, armMotion, legLook, newMarks, noteChanges, drawnFacing, wholeBody } from './motion.js';
 import { BALL_IN_HAND, ballHands, crossFrom, dribbleSpot, moveSpot } from './hands.js';
-import { checkGaits, checkMotions, checkFacts, personName, courtPeople, sideId, sized, missingPeople, checkHands, bodiesOf } from './checks.js';
+import { checkGaits, checkMotions, checkFacts, personName, numberSeed, courtPeople, sideId, sized, missingPeople, checkHands, bodiesOf } from './checks.js';
 import { easeFacing, leanOf, lookTarget, headTurn, easeHead } from './bearing.js';
 import { createAnimator, poseClip } from './animator.js';
 import { createFace, faceWants } from './face.js';
@@ -277,7 +277,7 @@ export async function loadPeople(camera) {
     const hands = { left: model.getObjectByName('mixamorigLeftHand'), right: model.getObjectByName('mixamorigRightHand') };
     checkHands(model.name, hands);   // so a broken file falls back to capsules at load, not on the first possession
     // arms: the arm motion he was given on the last frame, or null when his arms followed his legs.
-    return { team, number, kit, outfit: outfitOf(team, kit), model, scale, hands, near, far, wet, own, drawnAs: 'near', face: createFace(skin, team * 100 + Number(number) + (number === '00' ? 100 : 0)), animator: createAnimator(model, clips, facts, scale, index), gaits: sized(facts.gaits, scale * size), last: 'idle', arms: null };
+    return { team, number, kit, outfit: outfitOf(team, kit), model, scale, hands, near, far, wet, own, drawnAs: 'near', face: createFace(skin, team * 100 + numberSeed(number)), animator: createAnimator(model, clips, facts, scale, index), gaits: sized(facts.gaits, scale * size), last: 'idle', arms: null };
   }
   // Lets go of a person: his model leaves the court, and what was made for him alone is freed.
   function drop(he) {
@@ -326,7 +326,7 @@ export async function loadPeople(camera) {
   // Frees his file's shapes and pictures once neither of his kits is kept (each copy of him shared them).
   function unload(he) {
     const name = personName(he.team, he.number);
-    if (TEAMS[he.team].dev || [...people.values()].some(o => o.team === he.team && o.number === he.number) || [...making.keys()].some(k => k.startsWith(`${name}/`))) return;
+    if (!ownModels(TEAMS[he.team]) || [...people.values()].some(o => o.team === he.team && o.number === he.number) || [...making.keys()].some(k => k.startsWith(`${name}/`))) return;
     const file = files.get(name);
     files.delete(name);
     file?.then(loaded => loaded?.gltf.scene.traverse(part => {
@@ -344,7 +344,7 @@ export async function loadPeople(camera) {
     const key = keyOf(id, number, kit);
     if (people.has(key)) return Promise.resolve(people.get(key));
     if (!making.has(key)) {
-      const own = TEAMS[id].dev ? null : fileOf(id, number);
+      const own = ownModels(TEAMS[id]) ? fileOf(id, number) : null;
       const made = queue.then(nextTask).then(async () => {
         const row = TEAMS[id].players.findIndex(p => p.number === number), file = await own;
         const { body, size } = file ? { body: null, size: 1 } : bodiesOf(id)[row];

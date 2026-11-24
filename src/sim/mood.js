@@ -68,6 +68,11 @@ export const MOOD = f({
   // half in `half` seconds of play. At `at`, the two are rivals, and what happens between them moves them up to twice
   // as much. So rivals are two who trade big plays, not any two who guard each other.
   rival: f({ score: 0.05, big: 0.22, block: 0.3, steal: 0.15, answer: 1.5, again: 0.7, half: 240, at: 0.8 }),
+  // A duo (a team's `duo`, see guests.js): two team-mates who play off each other. look: expected points a pass from
+  // one to the other gains (a small lean: the star pull, decide.stars, already sends them the ball, and most of what
+  // the duo does is their two-man game: see plays.js cast). lift: what a basket by one gives the other on court, as
+  // an assist's lift (see feel), `big` times over for a dunk or a three.
+  duo: f({ look: 0.1, lift: 1, big: 2 }),
 });
 
 // A small hash of a name and a word: 0 to 1, the same every time.
@@ -165,6 +170,9 @@ export function feelShot(state, shooter, made, { value = 2, dunk = false, blocke
   if (guard) { feel(state, personOf(state, guard), 'scoredOn', scale); heat(state, shooter, guard, big ? MOOD.rival.big : MOOD.rival.score); }
   const mates = state.players.filter(p => p.team === shooter.team && p !== shooter), others = state.players.filter(p => p.team !== shooter.team);
   if (big && person.traits?.leader > 0.5) for (const p of mates) feel(state, personOf(state, p), 'ast', ((person.traits.leader - 0.5) * 2 * MOOD.leader) / MOOD.hit.ast[0]);
+  // One of a duo scores: the other, on court with him, feels it as his own.
+  const partner = person.partner === undefined ? null : mates.find(p => p.person === person.partner);
+  if (partner) feel(state, personOf(state, partner), 'ast', MOOD.duo.lift * (big ? MOOD.duo.big : 1));
   if (state.run[shooter.team] >= MOOD.run) {
     for (const p of [shooter, ...mates]) feel(state, personOf(state, p), 'run');
     for (const p of others) feel(state, personOf(state, p), 'against');
@@ -195,12 +203,12 @@ const SELF = new Set(['shoot', 'drive', 'move', 'fade', 'step', 'post']);
 // Leans `player`'s options (see choose.js) by his mood, before he chooses: the surer and the angrier he is, the more he
 // looks for his own shot (against his rival more again); the more he doubts himself, the more he passes; an angry
 // player passes less. And by his team-mates': a pass goes more to a man on a roll and less to one who is frustrated (a
-// pass option names its man by `to`: an id in the 3D game, the player in the fast engine). The style's mood.strength
-// scales it all (0: as if no one felt anything). Returns the options.
+// pass option names its man by `to`: an id in the 3D game, the player in the fast engine), and more to his partner in
+// a duo (see MOOD.duo). The style's mood.strength scales it all (0: as if no one felt anything). Returns the options.
 export function lean(state, player, options) {
   const k = styled(state, 'mood.strength');
   if (!k) return options;
-  const { confidence, frustration } = moodOf(state, personOf(state, player));
+  const me = personOf(state, player), { confidence, frustration } = moodOf(state, me);
   const rival = Math.min(1, heatBetween(state, player, guardOf(state, player)));
   const self = k * (MOOD.lean.self * (confidence + 0.6 * frustration) + MOOD.lean.rival * rival);
   const share = k * MOOD.lean.share * (Math.max(0, -confidence) - 0.6 * frustration);
@@ -213,6 +221,7 @@ export function lean(state, player, options) {
       if (m) {
         const them = personOf(state, m), feel = moodOf(state, them), rest = them.traits ? restOf(them.traits) : 0;
         o.value += k * (MOOD.lean.feed * Math.max(0, feel.confidence - rest) - MOOD.lean.sour * feel.frustration);
+        if (me.partner !== undefined && me.partner === m.person && m.team === player.team) o.value += k * MOOD.duo.look;
       }
     }
   }

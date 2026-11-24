@@ -2,7 +2,7 @@ import { isFoulCall } from '../sim/fouls.js';
 // Watching the match for what a broadcast would mark: the big moments, and the plain happenings a commentator calls.
 // It only reads the match; nothing here changes it.
 import { CLOCK } from '../sim/tuning.js';
-import { attackSign } from '../sim/state.js';
+import { attackSign, surname } from '../sim/state.js';
 import { rimCentre } from '../sim/ball.js';
 import { playOn } from '../sim/plays.js';
 import { moodOf } from '../sim/mood.js';
@@ -21,10 +21,9 @@ export const MOMENT = Object.freeze({ ankleWithin: 4, stealWithin: 5, deep: 8.5,
 
 // The moments, biggest first. The stars get a replay.
 export const KINDS = Object.freeze(['winner', 'buzzer', 'ankle', 'block', 'andOne', 'poster', 'stealScore', 'deep', 'clutch', 'onFire',
-  'heatingUp', 'run', 'comeback', 'rivalry', 'perfect']);
+  'heatingUp', 'run', 'comeback', 'rivalry', 'duo', 'perfect']);
 export const STARS = new Set(['winner', 'buzzer', 'ankle', 'block', 'andOne', 'poster']);
 
-const surname = person => person.name.split(' ').pop();
 const late = (state, clock, within) => state.quarter >= CLOCK.quarters && clock <= within;
 // The run a team is credited with: 8, then every 4 more. 0 below 8.
 const reached = run => (run >= MOMENT.run ? MOMENT.run + MOMENT.runStep * Math.floor((run - MOMENT.run) / MOMENT.runStep) : 0);
@@ -64,6 +63,9 @@ export function watchStep(watch, state, events = null) {
     if (sc.finish === 'dunk' && sc.far <= MOMENT.poster && sc.gap <= MOMENT.posterNear) moment('poster', sc.team, sc.row);
     if (steal && state.players[steal.by]?.team === sc.team && sc.at - steal.at <= MOMENT.stealWithin) moment('stealScore', sc.team, sc.row);
     if (sc.points === 3 && sc.far > MOMENT.deep) moment('deep', sc.team, sc.row);
+    // One of a duo (see sim/mood.js) feeds the other for a dunk, a three or an and-one.
+    if (sc.assist !== null && sc.assist === state.rosters[sc.team][sc.row].partner && (sc.finish === 'dunk' || sc.points === 3 || sc.fouled))
+      moment('duo', sc.team, sc.row, { off: surname(state.rosters[sc.team][sc.assist]) });
     if ((sc.tied || sc.lead) && late(state, sc.clock, MOMENT.clutchClock)) moment('clutch', sc.team, sc.row);
     const streak = state.rosters[sc.team][sc.row].streak;
     if (streak === 5) moment('onFire', sc.team, sc.row); else if (streak === 3) moment('heatingUp', sc.team, sc.row);
@@ -113,7 +115,7 @@ export function watchStep(watch, state, events = null) {
   const call = now.call;
   if (call && call !== was.call) {
     if (call.kind === 'timeout') plain('timeout', call.team, null, { left: [...state.timeouts] });
-    else if (isFoulCall(call.kind)) plain('foul', call.team, null, { what: call.kind, fouler: call.name ? call.name.split(' ').pop() : null, shots: call.shots });
+    else if (isFoulCall(call.kind)) plain('foul', call.team, null, { what: call.kind, fouler: call.name ? surname(call) : null, shots: call.shots });
     else plain(call.kind === 'out' ? 'out' : 'violation', call.team, null, { what: call.kind });
   }
   if (now.freeThrow && now.freeThrow !== was.freeThrow) { const shooter = state.players[now.freeThrow.shooter]; plain('freeThrow', shooter.team, shooter.person, { shots: now.freeThrow.total }); }
